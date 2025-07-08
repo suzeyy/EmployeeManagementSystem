@@ -1,20 +1,104 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿//using System;
+//using System.Collections.Generic;
+//using System.Linq;
+//using System.Threading.Tasks;
+//using Microsoft.AspNetCore.Http;
+//using Microsoft.AspNetCore.Mvc;
+//using Microsoft.EntityFrameworkCore;
+//using EmployeeManagementSystem.Data;
+//using EmployeeManagementSystem.Models;
+//using Microsoft.Data.SqlClient;
+//using EmployeeManagementSystem.DTOs.UserDTOs;
+//using EmployeeManagementSystem.Helpers;
+
+//namespace EmployeeManagementSystem.Controllers
+//{
+//    [Route("api/[controller]")]
+//    //[ApiController]
+//    public class UsersController : Controller
+//    {
+//        private readonly EmployeeManagementSystemContext _context;
+
+//        public UsersController(EmployeeManagementSystemContext context)
+//        {
+//            _context = context;
+//        }
+
+//        [HttpPost("register")]
+//        public async Task<IActionResult> RegisterUser([FromBody] User user)
+//        {
+//            try
+//            {
+//                string hashedPassword = PasswordHasher.Hash(user.Password);
+
+//                var result = await _context.Database.ExecuteSqlRawAsync(
+//                    "EXEC [dbo].[RegisterUser] @Username = {0}, @Password = {1}",
+//                    user.Username, hashedPassword
+//                );
+
+//                return Ok("User registration successfully.");
+//            }
+//            catch (SqlException ex) when (ex.Number == 51000)
+//            {
+//                return Conflict("Username already exists.");
+//            }
+//            catch (Exception)
+//            {
+//                return StatusCode(500, "An unexpected error occurred.");
+//            }
+//        }
+
+
+//        [HttpPost("login")]
+//        public async Task<IActionResult> LoginUser([FromBody] User user)
+//        {
+//            string hashedPassword = PasswordHasher.Hash(user.Password);
+
+//            var parameters = new[]
+//            {
+//        new SqlParameter("@Username", user.Username),
+//        new SqlParameter("@Password", hashedPassword)
+//    };
+
+//            try
+//            {
+//                var result = await _context.Set<UserLoginDTO>()
+//                    .FromSqlRaw("EXEC dbo.LoginUser @Username, @Password", parameters)
+//                    .ToListAsync();
+
+//                var matchedUser = result.FirstOrDefault();
+
+//                return Ok(new
+//                {
+//                    message = "Login successful.",
+//                    user = matchedUser
+//                });
+//            }
+//            catch (SqlException ex) when (ex.Number == 51001)
+//            {
+//                return Unauthorized("Invalid username or password.");
+//            }
+//            catch (Exception ex)
+//            {
+//                return StatusCode(500, $"Unexpected error: {ex.Message}");
+//            }
+//        }
+//    }
+
+//    }
+
+
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using EmployeeManagementSystem.Data;
 using EmployeeManagementSystem.Models;
-using Microsoft.Data.SqlClient;
 using EmployeeManagementSystem.DTOs.UserDTOs;
+using EmployeeManagementSystem.Helpers;
 
 namespace EmployeeManagementSystem.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class UsersController : ControllerBase
+    public class UsersController : Controller
     {
         private readonly EmployeeManagementSystemContext _context;
 
@@ -23,65 +107,66 @@ namespace EmployeeManagementSystem.Controllers
             _context = context;
         }
 
-        // POST: api/Users/register
-        //[HttpPost("register")]
-        //public async Task<IActionResult> RegisterUser([FromBody] User user)
-        //{
-        //    var result = await _context.Database.ExecuteSqlRawAsync(
-        //        "EXEC [dbo].[RegisterUser] @Username = {0}, @Password = {1}", user.Username, user.Password
-        //        );
-
-        //    if (result == 1)
-        //        return Ok("User registration successfully.");
-        //    else
-        //        return Conflict("Username already exists.");
-        //}
-
-        [HttpPost("register")]
-        public async Task<IActionResult> RegisterUser([FromBody] User user)
+        // Default landing page
+        [HttpGet("/")]
+        public IActionResult LoginRegister(bool isRegistering = false)
         {
-            try
-            {
-                var result = await _context.Database.ExecuteSqlRawAsync(
-                    "EXEC [dbo].[RegisterUser] @Username = {0}, @Password = {1}",
-                    user.Username, user.Password
-                );
+            ViewBag.IsRegistering = isRegistering;
+            return View("LoginRegister", new User());
+        }
 
-                return Ok("User registration successfully.");
-            }
-            catch (SqlException ex) when (ex.Number == 51000)
+        [HttpPost("/handle")]
+        public async Task<IActionResult> HandleLoginRegister(User user, bool isRegistering)
+        {
+            Console.WriteLine($"Form submitted. isRegistering: {isRegistering}, Username: {user.Username}");
+
+            if (isRegistering)
             {
-                return Conflict("Username already exists.");
+                return await RegisterUser(user);
             }
-            catch (Exception)
+            else
             {
-                return StatusCode(500, "An unexpected error occurred.");
+                return await LoginUser(user);
             }
         }
 
-
-
-        //// POST: api/Users/login
-        //[HttpPost("login")]
-        //public async Task<IActionResult> LoginUser([FromBody] User user)
-        //{
-        //    var matchedUser = await _context.User.FromSqlRaw("SELECT * FROM Users WHERE Username = {0} AND Password = {1}", user.Username, user.Password).FirstOrDefaultAsync();
-
-        //    if (matchedUser != null)
-        //        return Ok("Login Successful.");
-        //    else
-        //        return Unauthorized("Invalid username or password.");
-        //}
-
-
-        [HttpPost("login")]
-        public async Task<IActionResult> LoginUser([FromBody] User user)
+        [NonAction]
+        public async Task<IActionResult> RegisterUser(User user)
         {
+            try
+            {
+                string hashedPassword = PasswordHasher.Hash(user.Password);
+
+                var result = await _context.Database.ExecuteSqlRawAsync(
+                    "EXEC [dbo].[RegisterUser] @Username = {0}, @Password = {1}",
+                    user.Username, hashedPassword
+                );
+
+                TempData["Success"] = "User registered successfully.";
+                return RedirectToAction("LoginRegister", new { isRegistering = false });
+            }
+            catch (SqlException ex) when (ex.Number == 51000)
+            {
+                TempData["Error"] = "Username already exists.";
+                return RedirectToAction("LoginRegister", new { isRegistering = true });
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "An unexpected error occurred.";
+                return RedirectToAction("LoginRegister", new { isRegistering = true });
+            }
+        }
+
+        [NonAction]
+        public async Task<IActionResult> LoginUser(User user)
+        {
+            string hashedPassword = PasswordHasher.Hash(user.Password);
+
             var parameters = new[]
             {
-        new SqlParameter("@Username", user.Username),
-        new SqlParameter("@Password", user.Password)
-    };
+                new SqlParameter("@Username", user.Username),
+                new SqlParameter("@Password", hashedPassword)
+            };
 
             try
             {
@@ -91,21 +176,25 @@ namespace EmployeeManagementSystem.Controllers
 
                 var matchedUser = result.FirstOrDefault();
 
-                return Ok(new
+                if (matchedUser != null)
                 {
-                    message = "Login successful.",
-                    user = matchedUser
-                });
+                    TempData["Success"] = "Login successful.";
+                    return RedirectToAction("Dashboard", "Home"); // Ensure HomeController and Dashboard.cshtml exist
+                }
+
+                TempData["Error"] = "Invalid username or password.";
+                return RedirectToAction("LoginRegister", new { isRegistering = false });
             }
             catch (SqlException ex) when (ex.Number == 51001)
             {
-                return Unauthorized("Invalid username or password.");
+                TempData["Error"] = "Invalid username or password.";
+                return RedirectToAction("LoginRegister", new { isRegistering = false });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Unexpected error: {ex.Message}");
+                TempData["Error"] = $"Unexpected error: {ex.Message}";
+                return RedirectToAction("LoginRegister", new { isRegistering = false });
             }
         }
     }
-
-    }
+}

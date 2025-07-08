@@ -7,12 +7,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EmployeeManagementSystem.Data;
 using EmployeeManagementSystem.Models;
+using Microsoft.Data.SqlClient;
 
 namespace EmployeeManagementSystem.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class EmployeesController : ControllerBase
+    //[Route("api/[controller]")]
+    //[ApiController]
+    public class EmployeesController : Controller
     {
         private readonly EmployeeManagementSystemContext _context;
 
@@ -23,9 +24,20 @@ namespace EmployeeManagementSystem.Controllers
 
         // GET: api/Employees
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Employee>>> GetEmployee()
+        public async Task<IActionResult> GetAllEmployees()
         {
-            return await _context.Employee.ToListAsync();
+            try
+            {
+                var employees = await _context.Set<Employee>()
+                    .FromSqlRaw("EXEC dbo.GetAllEmployees")
+                    .ToListAsync();
+
+                return Ok(employees);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Failed to retrieve employee list.");
+            }
         }
 
         // GET: api/Employees/5
@@ -44,65 +56,100 @@ namespace EmployeeManagementSystem.Controllers
 
         // PUT: api/Employees/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutEmployee(int id, Employee employee)
+        [HttpPut()]
+        public async Task<IActionResult> UpdateEmployee([FromBody] Employee employee)
         {
-            if (id != employee.EmployeeId)
+            var parameters = new[]
             {
-                return BadRequest();
-            }
-
-            _context.Entry(employee).State = EntityState.Modified;
+        new SqlParameter("@EmployeeId", employee.EmployeeId),
+        new SqlParameter("@FirstName", employee.FirstName),
+        new SqlParameter("@LastName", employee.LastName),
+        new SqlParameter("@Email", employee.Email),
+        new SqlParameter("@Phone", employee.Phone),
+        new SqlParameter("@Position", employee.Position)
+    };
 
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EmployeeExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+                await _context.Database.ExecuteSqlRawAsync(
+                    "EXEC dbo.UpdateEmployee @EmployeeId, @FirstName, @LastName, @Email, @Phone, @Position",
+                    parameters
+                );
 
-            return NoContent();
+                return Ok("Employee updated successfully.");
+            }
+            catch (SqlException ex) when (ex.Number == 51003)
+            {
+                return Conflict("Email already exists.");
+            }
+            catch (SqlException ex) when (ex.Number == 51004)
+            {
+                return Conflict("Phone number already exists.");
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "An unexpected error occurred.");
+            }
         }
+
 
         // POST: api/Employees
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Employee>> PostEmployee(Employee employee)
+        public async Task<IActionResult> AddEmployee([FromBody] Employee employee)
         {
-            _context.Employee.Add(employee);
-            await _context.SaveChangesAsync();
+            var parameters = new[]
+            {
+                new SqlParameter("@FirstName", employee.FirstName),
+        new SqlParameter("@LastName", employee.LastName),
+        new SqlParameter("@Email", employee.Email),
+        new SqlParameter("@Phone", employee.Phone),
+        new SqlParameter("@Position", employee.Position),
+        new SqlParameter("@CreatedBy", employee.CreatedBy)
+            };
 
-            return CreatedAtAction("GetEmployee", new { id = employee.EmployeeId }, employee);
+            try
+            {
+                await _context.Database.ExecuteSqlRawAsync(
+                    "EXEC dbo.AddEmployee @FirstName, @LastName, @Email, @Phone, @Position, @CreatedBy",
+                    parameters
+                );
+
+                return Ok("Employee added successfully.");
+            }
+            catch (SqlException ex) when (ex.Number == 51003)
+            {
+                return Conflict("Email already exists.");
+            }
+            catch (SqlException ex) when (ex.Number == 51004)
+            {
+                return Conflict("Phone number already exists.");
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "An unexpected error occurred.");
+            }
         }
 
         // DELETE: api/Employees/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEmployee(int id)
         {
-            var employee = await _context.Employee.FindAsync(id);
-            if (employee == null)
+            var parameter = new SqlParameter("@EmployeeId", id);
+
+            try
             {
-                return NotFound();
+                await _context.Database.ExecuteSqlRawAsync("EXEC dbo.DeleteEmployee @EmployeeId", parameter);
+                return Ok("Employee deleted successfully.");
             }
-
-            _context.Employee.Remove(employee);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool EmployeeExists(int id)
-        {
-            return _context.Employee.Any(e => e.EmployeeId == id);
+            catch (SqlException ex) when (ex.Number == 51005)
+            {
+                return NotFound("Employee not found.");
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "An unexpected error occurred.");
+            }
         }
     }
 }
