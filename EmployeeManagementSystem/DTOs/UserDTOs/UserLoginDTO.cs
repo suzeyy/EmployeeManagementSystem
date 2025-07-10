@@ -1,4 +1,6 @@
-﻿namespace EmployeeManagementSystem.DTOs.UserDTOs
+﻿using EmployeeManagementSystem.Models;
+
+namespace EmployeeManagementSystem.DTOs.UserDTOs
 {
     public class UserLoginDTO
     {

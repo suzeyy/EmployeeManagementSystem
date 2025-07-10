@@ -56,8 +56,8 @@ namespace EmployeeManagementSystem.Controllers
 
         // PUT: api/Employees/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut()]
-        public async Task<IActionResult> UpdateEmployee([FromBody] Employee employee)
+        [HttpPost]
+        public async Task<IActionResult> UpdateEmployee(Employee employee)
         {
             var parameters = new[]
             {
@@ -76,27 +76,28 @@ namespace EmployeeManagementSystem.Controllers
                     parameters
                 );
 
-                return Ok("Employee updated successfully.");
+                TempData["Success"] = "Employee updated successfully.";
             }
             catch (SqlException ex) when (ex.Number == 51003)
             {
-                return Conflict("Email already exists.");
+                TempData["Error"] = "Email already exists.";
             }
             catch (SqlException ex) when (ex.Number == 51004)
             {
-                return Conflict("Phone number already exists.");
+                TempData["Error"] = "Phone number already exists.";
             }
             catch (Exception)
             {
-                return StatusCode(500, "An unexpected error occurred.");
+                TempData["Error"] = "An unexpected error occurred.";
             }
+            return RedirectToAction("Dashboard", "Home");
         }
 
 
         // POST: api/Employees
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<IActionResult> AddEmployee([FromBody] Employee employee)
+        public async Task<IActionResult> AddEmployee(Employee employee)
         {
             var parameters = new[]
             {
@@ -104,35 +105,35 @@ namespace EmployeeManagementSystem.Controllers
         new SqlParameter("@LastName", employee.LastName),
         new SqlParameter("@Email", employee.Email),
         new SqlParameter("@Phone", employee.Phone),
-        new SqlParameter("@Position", employee.Position),
-        new SqlParameter("@CreatedBy", employee.CreatedBy)
+        new SqlParameter("@Position", employee.Position)
             };
 
             try
             {
                 await _context.Database.ExecuteSqlRawAsync(
-                    "EXEC dbo.AddEmployee @FirstName, @LastName, @Email, @Phone, @Position, @CreatedBy",
+                    "EXEC dbo.AddEmployee @FirstName, @LastName, @Email, @Phone, @Position",
                     parameters
                 );
 
-                return Ok("Employee added successfully.");
+                TempData["Success"] = "Employee added successfully.";
             }
             catch (SqlException ex) when (ex.Number == 51003)
             {
-                return Conflict("Email already exists.");
+                TempData["Error"] = "Email already exists.";
             }
             catch (SqlException ex) when (ex.Number == 51004)
             {
-                return Conflict("Phone number already exists.");
+                TempData["Error"] = "Phone number already exists.";
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return StatusCode(500, "An unexpected error occurred.");
+                TempData["Error"] = $"An unexpected error occurred.: {ex.Message}";
             }
+            return RedirectToAction("Dashboard", "Home");
         }
 
         // DELETE: api/Employees/5
-        [HttpDelete("{id}")]
+        [HttpPost]
         public async Task<IActionResult> DeleteEmployee(int id)
         {
             var parameter = new SqlParameter("@EmployeeId", id);
@@ -140,16 +141,17 @@ namespace EmployeeManagementSystem.Controllers
             try
             {
                 await _context.Database.ExecuteSqlRawAsync("EXEC dbo.DeleteEmployee @EmployeeId", parameter);
-                return Ok("Employee deleted successfully.");
+                TempData["Success"] = "Employee deleted successfully.";
             }
             catch (SqlException ex) when (ex.Number == 51005)
             {
-                return NotFound("Employee not found.");
+                TempData["Error"] = "Employee not found.";
             }
             catch (Exception)
             {
-                return StatusCode(500, "An unexpected error occurred.");
+                TempData["Error"] = "An unexpected error occurred.";
             }
+            return RedirectToAction("Dashboard", "Home");
         }
     }
 }
