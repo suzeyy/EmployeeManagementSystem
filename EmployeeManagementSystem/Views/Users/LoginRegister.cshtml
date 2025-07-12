@@ -33,7 +33,10 @@
 
                 <div class="mb-3">
                     <label for="Password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="Password" name="Password" required />
+                    <input type="password" class="form-control" id="Password" name="Password" minlength="8"
+                           required
+                           pattern=".{8,}"
+                           title="Password must be at least 8 characters long" />
                 </div>
 
                 <button type="submit" class="btn btn-primary w-100">

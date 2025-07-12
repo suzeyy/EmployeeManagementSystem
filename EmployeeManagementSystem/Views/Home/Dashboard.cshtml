@@ -93,39 +93,44 @@
         <div class="modal-dialog">
             <div class="modal-content">
 
-                <form method="post" asp-action="AddEmployee" asp-controller="Employees">
-                    
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="addEmployeeModalLabel">Add New Employee</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <form method="post" asp-action="AddEmployee" asp-controller="Employees" class="needs-validation" novalidate>
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Employee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">First Name</label>
+                        <input type="text" name="FirstName" class="form-control" required minlength="2" />
+                        <div class="invalid-feedback">Please enter a valid first name (min 2 characters).</div>
                     </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">First Name</label>
-                            <input type="text" name="FirstName" class="form-control" required />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Last Name</label>
-                            <input type="text" name="LastName" class="form-control" required />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" name="Email" class="form-control" required />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Phone</label>
-                            <input type="text" name="Phone" class="form-control" required />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Position</label>
-                            <input type="text" name="Position" class="form-control" required />
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" name="LastName" class="form-control" required minlength="2" />
+                        <div class="invalid-feedback">Please enter a valid last name (min 2 characters).</div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary">Add Employee</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="Email" class="form-control" required />
+                        <div class="invalid-feedback">Please enter a valid email address.</div>
                     </div>
-                </form>
+                    <div class="mb-3">
+                        <label class="form-label">Phone</label>
+                        <input type="text" name="Phone" class="form-control" required pattern="^\d{7,10}$" />
+                        <div class="invalid-feedback">Phone must be between 7–10 digits.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Position</label>
+                        <input type="text" name="Position" class="form-control" required minlength="2" />
+                        <div class="invalid-feedback">Please enter a position.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Add Employee</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+
             </div>
         </div>
     </div>
@@ -134,40 +139,46 @@
     <div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-labelledby="editEmployeeModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-               
-                <form method="post" asp-action="UpdateEmployee" asp-controller="Employees">
-                    <input type="hidden" name="EmployeeId" id="EditEmployeeId" />
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="editEmployeeModalLabel">Edit Employee</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+            <form method="post" asp-action="UpdateEmployee" asp-controller="Employees" class="needs-validation" novalidate>
+                <input type="hidden" name="EmployeeId" id="EditEmployeeId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Employee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">First Name</label>
+                        <input type="text" id="EditFirstName" name="FirstName" class="form-control" required minlength="2" />
+                        <div class="invalid-feedback">Please enter a valid first name.</div>
                     </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">First Name</label>
-                            <input type="text" id="EditFirstName" name="FirstName" class="form-control" required />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Last Name</label>
-                            <input type="text" id="EditLastName" name="LastName" class="form-control" required />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" id="EditEmail" name="Email" class="form-control" required />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Phone</label>
-                            <input type="text" id="EditPhone" name="Phone" class="form-control" required />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Position</label>
-                            <input type="text" id="EditPosition" name="Position" class="form-control" required />
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" id="EditLastName" name="LastName" class="form-control" required minlength="2" />
+                        <div class="invalid-feedback">Please enter a valid last name.</div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary">Update</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="EditEmail" name="Email" class="form-control" required />
+                        <div class="invalid-feedback">Please enter a valid email address.</div>
                     </div>
-                </form>
+                    <div class="mb-3">
+                        <label class="form-label">Phone</label>
+                        <input type="text" id="EditPhone" name="Phone" class="form-control" required pattern="^\d{7,10}$" />
+                        <div class="invalid-feedback">Phone must be between 7–10 digits.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Position</label>
+                        <input type="text" id="EditPosition" name="Position" class="form-control" required minlength="2" />
+                        <div class="invalid-feedback">Please enter a position.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Update</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+
 
             </div>
         </div>
@@ -193,4 +204,19 @@
             new bootstrap.Toast(toastEl, { delay: 3000, autohide: true }).show();
         });
     </script>
+<script>
+    (() => {
+        'use strict';
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+</script>
 </div>
